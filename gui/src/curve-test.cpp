@@ -7,6 +7,7 @@
 #include "ratchet/chainkeytest.h"
 #include "ratchet/ratchetingsessiontest.h"
 #include "sessionbuildertest.h"
+#include "sessionciphertest.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,11 @@ int main(int argc, char *argv[])
     RatchetingSessionTest ratchetingSessionTest;
     ratchetingSessionTest.testRatchetingSessionAsBob();
     ratchetingSessionTest.testRatchetingSessionAsAlice();
+
+    SessionCipherTest sessionCipherTest;
+    sessionCipherTest.simpleTest();
+    sessionCipherTest.testBasicSessionV2();
+    sessionCipherTest.testBasicSessionV3();
 
     SessionBuilderTest sessionBuilderTest;
     sessionBuilderTest.testBasicPreKeyV2();

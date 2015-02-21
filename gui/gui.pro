@@ -22,7 +22,8 @@ HEADERS += \
     src/ratchet/chainkeytest.h \
     src/ratchet/ratchetingsessiontest.h \
     src/sessionbuildertest.h \
-    src/inmemoryaxolotlstore.h
+    src/inmemoryaxolotlstore.h \
+    src/sessionciphertest.h
 
 SOURCES += \
     src/curve-test.cpp \
@@ -37,7 +38,8 @@ SOURCES += \
     src/ratchet/chainkeytest.cpp \
     src/ratchet/ratchetingsessiontest.cpp \
     src/sessionbuildertest.cpp \
-    src/inmemoryaxolotlstore.cpp
+    src/inmemoryaxolotlstore.cpp \
+    src/sessionciphertest.cpp
 
 OTHER_FILES += qml/curve-test.qml \
     qml/cover/CoverPage.qml \
