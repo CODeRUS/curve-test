@@ -23,39 +23,6 @@ SessionCipherTest::SessionCipherTest()
 {
 }
 
-void SessionCipherTest::simpleTest()
-{
-    qDebug() << "simpleTest";
-
-    QByteArray data("Test message");
-
-    QByteArray key128(16, 'z');
-    unsigned int counter = 0;
-
-    QByteArray ciphertextv2 = getCiphertextV2(key128, counter, data);
-    QByteArray plaintextv2 = getPlaintextV2(key128, counter, ciphertextv2);
-    if (plaintextv2 != data) {
-        qDebug() << "[V2] FAILED";
-    }
-    else {
-        qDebug() << "[V2] PASSED";
-    }
-
-    QByteArray key256(32, 'z');
-    QByteArray ivec(16, 'x');
-    QByteArray iv1(ivec);
-    QByteArray iv2(ivec);
-
-    QByteArray ciphertextv3 = getCiphertextV3(key256, iv1, data);
-    QByteArray plaintextv3 = getPlaintextV3(key256, iv2, ciphertextv3);
-    if (plaintextv3 != data) {
-        qDebug() << "[V3] FAILED";
-    }
-    else {
-        qDebug() << "[V3] PASSED";
-    }
-}
-
 void SessionCipherTest::testBasicSessionV2()
 {
     qDebug() << "testBasicSessionV2";
@@ -88,6 +55,24 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
 
     SessionCipher     aliceCipher(aliceStore, 2, 1);
     SessionCipher     bobCipher(bobStore, 3, 1);
+
+    bool test0 = true;
+    for (int i = 0; i < 30; i++) {
+        QByteArray        alicePlaintext("This is a plaintext message.");
+        QSharedPointer<CiphertextMessage> message = aliceCipher.encrypt(alicePlaintext);
+        QSharedPointer<WhisperMessage> whisperBob(new WhisperMessage(message->serialize()));
+        QByteArray        bobPlaintext   = bobCipher.decrypt(whisperBob);
+        if (bobPlaintext != alicePlaintext) {
+            qWarning() << "FAILED AT" << i << whisperBob->getBody().toHex();
+            qWarning() << "SOURCETEXT:" << alicePlaintext.toHex();
+            qWarning() << "PLAINTEXT:" << bobPlaintext.toHex();
+            test0 = false;
+        }
+        message.clear();
+        whisperBob.clear();
+    }
+
+    qDebug() << "TEST0" << (test0 ? "PASSED" : "FAILED");
 
     QByteArray        alicePlaintext("This is a plaintext message.");
     QSharedPointer<CiphertextMessage> message = aliceCipher.encrypt(alicePlaintext);
@@ -126,7 +111,8 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
 
     // X Collections.shuffle(aliceCiphertextMessages, new Random(seed));
     // X Collections.shuffle(alicePlaintextMessages, new Random(seed));
-    qDebug() << "TEST3";
+
+    bool test3 = true;
     for (int i = 0; i < aliceCiphertextMessages.size() / 2; i++) {
         QSharedPointer<WhisperMessage> decryptMessage(new WhisperMessage(aliceCiphertextMessages[i]->serialize()));
         QByteArray receivedPlaintext = bobCipher.decrypt(decryptMessage);
@@ -137,8 +123,10 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
         if (!passed3) {
             qDebug() << QString("receivedPlaintext[%1]     ").arg(i) << receivedPlaintext.toHex();
             qDebug() << QString("alicePlaintextMessages[%1]").arg(i) << alicePlaintextMessages[i].toHex();
+            test3 = false;
         }
     }
+    qDebug() << "TEST3" << (test3 ? "PASSED" : "FAILED");
 
     QList< QSharedPointer<CiphertextMessage> > bobCiphertextMessages;
     QList<QByteArray> bobPlaintextMessages;
@@ -154,7 +142,7 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
     // X Collections.shuffle(bobCiphertextMessages, new Random(seed));
     // X Collections.shuffle(bobPlaintextMessages, new Random(seed));
 
-    qDebug() << "TEST4";
+    bool test4 = true;
     for (int i = 0; i < bobCiphertextMessages.size() / 2; i++) {
         QSharedPointer<WhisperMessage> decryptMessage(new WhisperMessage(bobCiphertextMessages[i]->serialize()));
         QByteArray receivedPlaintext = aliceCipher.decrypt(decryptMessage);
@@ -165,10 +153,12 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
         if (!passed4) {
             qDebug() << QString("receivedPlaintext[%1]   ").arg(i) << receivedPlaintext.toHex();
             qDebug() << QString("bobPlaintextMessages[%1]").arg(i) << bobPlaintextMessages[i].toHex();
+            test4 = false;
         }
     }
+    qDebug() << "TEST4" << (test4 ? "PASSED" : "FAILED");
 
-    qDebug() << "TEST5";
+    bool test5 = true;
     for (int i = aliceCiphertextMessages.size() / 2; i < aliceCiphertextMessages.size(); i++) {
         QSharedPointer<WhisperMessage> decryptMessage(new WhisperMessage(aliceCiphertextMessages[i]->serialize()));
         QByteArray receivedPlaintext = bobCipher.decrypt(decryptMessage);
@@ -179,10 +169,12 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
         if (!passed5) {
             qDebug() << QString("receivedPlaintext[%1]     ").arg(i) << receivedPlaintext.toHex();
             qDebug() << QString("alicePlaintextMessages[%1]").arg(i) << alicePlaintextMessages[i].toHex();
+            test5 = true;
         }
     }
+    qDebug() << "TEST5" << (test5 ? "PASSED" : "FAILED");
 
-    qDebug() << "TEST6";
+    bool test6 = true;
     for (int i = bobCiphertextMessages.size() / 2; i < bobCiphertextMessages.size(); i++) {
         QSharedPointer<WhisperMessage> decryptMessage(new WhisperMessage(bobCiphertextMessages[i]->serialize()));
         QByteArray receivedPlaintext = aliceCipher.decrypt(decryptMessage);
@@ -193,8 +185,10 @@ void SessionCipherTest::runInteraction(SessionRecord *aliceSessionRecord, Sessio
         if (!passed6) {
             qDebug() << QString("receivedPlaintext[%1]   ").arg(i) << receivedPlaintext.toHex();
             qDebug() << QString("bobPlaintextMessages[%1]").arg(i) << bobPlaintextMessages[i].toHex();
+            test6 = false;
         }
     }
+    qDebug() << "TEST6" << (test6 ? "PASSED" : "FAILED");
 }
 
 void SessionCipherTest::initializeSessionsV2(SessionState *aliceSessionState, SessionState *bobSessionState)
@@ -263,61 +257,4 @@ void SessionCipherTest::initializeSessionsV3(SessionState *aliceSessionState, Se
 
     RatchetingSession::initializeSession(aliceSessionState, 3, aliceParameters);
     RatchetingSession::initializeSession(bobSessionState, 3, bobParameters);
-}
-
-QByteArray SessionCipherTest::getPlaintextV2(const QByteArray &key, unsigned int counter, const QByteArray &ciphertext)
-{
-    AES_KEY dec_key;
-    AES_set_encrypt_key((const unsigned char*)key.constData(), key.size() * 8, &dec_key);
-    QByteArray out(ciphertext.size(), '\0');
-    QByteArray iv(AES_BLOCK_SIZE, '\0');
-    ByteUtil::intToByteArray(iv, 0, counter);
-    unsigned char ecount[AES_BLOCK_SIZE];
-    memset(ecount, 0, AES_BLOCK_SIZE);
-    AES_ctr128_encrypt((unsigned char*)ciphertext.constData(), (unsigned char*)out.data(),
-                       ciphertext.size(), &dec_key, (unsigned char*)iv.constData(),
-                       ecount, &counter);
-    return out;
-}
-
-QByteArray SessionCipherTest::getPlaintextV3(const QByteArray &key, QByteArray &iv, const QByteArray &ciphertext)
-{
-    AES_KEY dec_key;
-    AES_set_decrypt_key((const unsigned char*)key.constData(), key.size() * 8, &dec_key);
-    QByteArray out(ciphertext.size(), '\0');
-    AES_cbc_encrypt((const unsigned char*)ciphertext.constData(),
-                    (unsigned char*)out.data(),
-                    ciphertext.size(), &dec_key,
-                    (unsigned char*)iv.data(), AES_DECRYPT);
-    out.resize(out.size() - out.right(1)[0]);
-    return out;
-}
-
-QByteArray SessionCipherTest::getCiphertextV2(const QByteArray &key, unsigned int counter, const QByteArray &plaintext)
-{
-    AES_KEY enc_key;
-    AES_set_encrypt_key((const unsigned char*)key.constData(), key.size() * 8, &enc_key);
-    QByteArray out(plaintext.size(), '\0');
-    QByteArray iv(AES_BLOCK_SIZE, '\0');
-    ByteUtil::intToByteArray(iv, 0, counter);
-    unsigned char ecount[AES_BLOCK_SIZE];
-    memset(ecount, 0, AES_BLOCK_SIZE);
-    AES_ctr128_encrypt((unsigned char*)plaintext.constData(), (unsigned char*)out.data(),
-                       plaintext.size(), &enc_key, (unsigned char*)iv.constData(),
-                       ecount, &counter);
-    return out;
-}
-
-QByteArray SessionCipherTest::getCiphertextV3(const QByteArray &key, QByteArray &iv, const QByteArray &plaintext)
-{
-    AES_KEY enc_key;
-    AES_set_encrypt_key((const unsigned char*)key.constData(), key.size() * 8, &enc_key);
-    QByteArray padText = plaintext;
-    int padlen = ((padText.size() + AES_BLOCK_SIZE) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE - plaintext.size();
-    padText.append(QByteArray(padlen, (char)padlen));
-    QByteArray out(padText.size(), '\0');
-    AES_cbc_encrypt((const unsigned char*)padText.constData(), (unsigned char*)out.data(),
-                    padText.size(), &enc_key,
-                    (unsigned char*)iv.data(), AES_ENCRYPT);
-    return out;
 }

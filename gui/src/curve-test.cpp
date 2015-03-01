@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
     ratchetingSessionTest.testRatchetingSessionAsAlice();
 
     SessionCipherTest sessionCipherTest;
-    sessionCipherTest.simpleTest();
     sessionCipherTest.testBasicSessionV2();
     sessionCipherTest.testBasicSessionV3();
 
